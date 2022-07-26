@@ -1,0 +1,5 @@
+nbdev~=1.2
+jupyterlab~=3.3
+jupytext~=1.13
+wheel
+twine
