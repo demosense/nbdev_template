@@ -124,7 +124,7 @@ _**Nota**: como has podido observar en el fichero requirements-dev.txt están lo
 python -m pip install -e .
 ```
 
-## Como trabajar en los notebooks y Nbdev
+## Cómo trabajar en los notebooks y Nbdev
 
 Usamos _nbdev_ para transladar código implementado en los notebooks a ficheros _.py_, crear atomáticamente documentación y crear la estructura de un paquete de python instalable. Esto se hace solamente **usando comentarios específicos en la primera línea de las celdas de los notebooks**. Están disponibles los siguientes comentarios:
 
@@ -190,89 +190,36 @@ El _sidebar_ lateral ubicado en el lado izquierdo se crea a partir de `docs/side
 
 ### Establecer la ruta de los datos
 
-Podemos usar una variable de entorno `DATA_PATH` para controlar dónde se encuentran los datos (carpeta raíz). Tenemos que definirlo cuando estamos trabajando en el cuaderno antes de iniciar jupyterlab, por ejemplo: `DATA_PATH=<path_to_data> python -m jupyterlab` y tenemos que definirlo cuando ejecutamos un ETL, por ejemplo: `DATA_PATH=<path_to_data> . /build.sh ejecutar --name <nombre_etl>`
+Podemos usar una variable de entorno `DATA_PATH` para controlar dónde se encuentran los datos (carpeta raíz). Tenemos que definirlo cuando estamos trabajando en el cuaderno antes de iniciar jupyterlab, por ejemplo: `DATA_PATH=<path_to_data> python -m jupyterlab` y tenemos que definirlo cuando ejecutamos un ETL, por ejemplo: `DATA_PATH=<path_to_data> . /build.sh run --name <nombre_etl>`
 
-<span style="color: red;">
-### **Releases**
 
-The package is published to a private pypi repository in AWS CodeArtifact service. Each time we want to make a new release we need to do the following steps.
-
-### **Repository creation on AWS (just once)**
-
-The repository must be created in the AWS account. The steps to do that are:
-
-1. Go to AWS CodeArtifact service (use the Console)
-2. Create a domain:
-   - Name: `{lib_name}`
-3. Create a repository:
-   - Name: `{lib_name}`
-   - Public upstream repositories: select pypi-store
-   - Select the `{lib_name}` domain (it is this aws account)
-   - Create repository
-4. Optionally edit the domain and repository policies to allow access for every AWS account of interest (crossaccount):
-   1. Domain policy:
-
-```jsx
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "ContributorPolicy",
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": [
-                    "arn:aws:iam::XXXXXXXXXXXX:root",
-                ]
-            },
-            "Action": [
-                "codeartifact:DescribeDomain",
-                "codeartifact:GetAuthorizationToken",
-                "codeartifact:GetDomainPermissionsPolicy",
-                "codeartifact:ListRepositoriesInDomain",
-                "sts:GetServiceBearerToken"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
-
-b. Repository policy:
-
-```jsx
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Principal": {
-                "AWS": [
-                    "arn:aws:iam::XXXXXXXXXXXX:root",
-                ]
-            },
-            "Action": [
-                "codeartifact:DescribePackageVersion",
-                "codeartifact:DescribeRepository",
-                "codeartifact:GetPackageVersionReadme",
-                "codeartifact:GetRepositoryEndpoint",
-                "codeartifact:ListPackageVersionAssets",
-                "codeartifact:ListPackageVersionDependencies",
-                "codeartifact:ListPackageVersions",
-                "codeartifact:ListPackages",
-                "codeartifact:ReadFromRepository"
-            ],
-            "Resource": "*"
-        }
-    ]
-}
-```
 
 ### **New release**
 
-1. Edit file `settings.ini` and bump version field using [semantic versioning](https://semver.org/).
-2. There are two modes:
-   1. Manual: run the command `AWS_PROFILE=<aws profile> ./build.sh release`. This will upload the package to CodeArtifact in the account determined by `<aws profile>`.
-   2. Automatic: Commit and push. Once the commit is in origin master, CI/CD will make the release to CodeArtifact. In this case you need to configure a proper CI/CD environment to run the manual command described before.
+Para utilizar este paquete en otros proyectos hay que publicarlo en algún repositorio compatible con [PyPi](https://pypi.org/), o usar la sintáxis de pip para instalar un paquete de python a partir de un repositorio de código (como GitHub o GitLab). A continuación vamos a explicar cómo construir una nueva versión del paquete, y cómo utilizarlo desde otro proyecto, bien publicándolo a un repositorio compatible con [PyPi](https://pypi.org/) e instalándolo desde ahí, o bien instalándolo directamente desde GitHub o GitLab.
+
+#### Creación de una nueva versión del paquete
+
+Es necesario editar el fichero `settings.ini` y subir la versión en el campo de `version` usando [versionado semántico](https://semver.org/).
+
+Después usa el comando `./build.sh build` o `nbdev_build_lib` para generar el paqeute de python del proyecto (ejecuta el comando en una terminal en la raiz del proyecto)
+
+#### Desplegar el paquete a un repositorio compatible con PyPi
+
+Se puede subir el paquete a un repositorio tipo [PyPi](https://pypi.org/). PyPi es un repositorio de paquetes de python público, si se quiere usar uno privado es necesario realizar un despliegue en infraestructura on premise (ver [instrucciones](https://packaging.python.org/en/latest/guides/hosting-your-own-index/)).
+
+Para instalar un paquete en un repositorio privado basta con [especificar el índice adecuado](https://docs.readthedocs.io/en/stable/guides/private-python-packages.html#from-a-repository-manager-other-than-pypi).
+
+#### Instalar desde un CVS
+
+Para esta opción es necesario subir todo el contenido del paquete al CVS (GitHub o GitLab, por ejemplo), es decir, hay subir la carpeta que se crea al construir el paquete (usando el comando `./build.sh build` o `nbdev_build_lib`).
+
+Una vez que todo el código del paquete está subido al CVS, se puede instalar con pip [de la siguiente manera](https://docs.readthedocs.io/en/stable/guides/private-python-packages.html):
+
+- git+https://{token}@gitprovider.com/user/project.git@{version}
+
+donde sería necesario generar un token con permiso para clonar el repositorio.
+
 
 ## External documentation and useful links
 
@@ -283,4 +230,4 @@ b. Repository policy:
 ### NBDEV GitHub
 
 [https://github.com/fastai/nbdev](https://github.com/fastai/nbdev)
-</span>
+
